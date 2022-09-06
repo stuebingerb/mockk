@@ -25,9 +25,10 @@ class ObjenesisInstantiator(
             @Suppress("UNCHECKED_CAST")
             return Any() as T
         } else if (cls.isSealedSafe()) {
-            cls.getPermittedSubclassesSafe().firstNotNullOfOrNull { subCls ->
+            @Suppress("UNCHECKED_CAST")
+            return cls.getPermittedSubclassesSafe().firstNotNullOfOrNull { subCls ->
                 runCatching { instance(subCls) }.getOrNull()
-            } ?: error("could not find subclass for sealed class $cls")
+            } as T ?: error("could not find subclass for sealed class $cls")
         } else if (!Modifier.isFinal(cls.modifiers)) {
             try {
                 val instance = instantiateViaProxy(cls)
@@ -55,7 +56,7 @@ class ObjenesisInstantiator(
         javaClass.methods.firstOrNull { it.name == "isSealed" }?.invoke(this) == true
 
     /**
-     * `Class<?>[] Class.getPermittedSubclasses` is only available with JDK 17+. Used via reflection
+     * `Class<?>[] Class.getPermittedSubclasses()` is only available with JDK 17+. Used via reflection
      * to support builds with previous Java versions as well. This should be refactored to use the
      * actual method once the minimum Java version is 17.
      */
