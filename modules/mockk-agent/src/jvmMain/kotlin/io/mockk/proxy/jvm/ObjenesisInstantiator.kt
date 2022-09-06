@@ -24,6 +24,10 @@ class ObjenesisInstantiator(
         if (cls == Any::class.java) {
             @Suppress("UNCHECKED_CAST")
             return Any() as T
+        } else if (cls.isSealedSafe()) {
+            cls.getPermittedSubclassesSafe().firstNotNullOfOrNull { subCls ->
+                runCatching { instance(subCls) }.getOrNull()
+            } ?: error("could not find subclass for sealed class $cls")
         } else if (!Modifier.isFinal(cls.modifiers)) {
             try {
                 val instance = instantiateViaProxy(cls)
@@ -41,6 +45,27 @@ class ObjenesisInstantiator(
 
         return instanceViaObjenesis(cls)
     }
+
+    /**
+     * `boolean Class.isSealed()` is only available with JDK 17+. Used via reflection to support
+     * builds with previous Java versions as well. This should be refactored to use the actual
+     * method once the minimum Java version is 17.
+     */
+    private fun Class<*>.isSealedSafe(): Boolean =
+        javaClass.methods.firstOrNull { it.name == "isSealed" }?.invoke(this) == true
+
+    /**
+     * `Class<?>[] Class.getPermittedSubclasses` is only available with JDK 17+. Used via reflection
+     * to support builds with previous Java versions as well. This should be refactored to use the
+     * actual method once the minimum Java version is 17.
+     */
+    private fun Class<*>.getPermittedSubclassesSafe(): Array<Class<*>> =
+        javaClass.methods.firstOrNull { it.name == "getPermittedSubclasses" }
+            ?.let {
+                @Suppress("UNCHECKED_CAST")
+                it.invoke(this) as Array<Class<*>>
+            }
+            ?: emptyArray()
 
     private fun <T> instantiateViaProxy(cls: Class<T>): T? {
         val proxyCls = if (!Modifier.isAbstract(cls.modifiers)) {
