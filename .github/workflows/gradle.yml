@@ -32,6 +32,8 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
+        with:
+          cache-disabled: true
 
       - name: Run tests with Gradle
         run: >
@@ -39,6 +41,7 @@ jobs:
           --stacktrace
           -Pkotlin.version=${{ matrix.kotlin-version }}
           -Pkotlin.ir.enabled=${{ matrix.kotlin-ir-enabled }}
+          -PjavaToolchainMainVersion=${{ matrix.java-version }}
           -PjavaToolchainTestVersion=${{ matrix.java-version }}
 
   android-instrumented-tests:
