@@ -9,18 +9,6 @@ import org.jetbrains.kotlin.gradle.tasks.UsesKotlinJavaToolchain
 description = "Set JavaToolchain for compiling main and test code"
 
 
-tasks.withType<JavaCompile>().configureEach {
-    options.encoding = "UTF-8"
-    sourceCompatibility = Deps.Versions.jvmTarget.toString()
-    targetCompatibility = Deps.Versions.jvmTarget.toString()
-}
-
-tasks.withType<KotlinCompile>().configureEach {
-    kotlinOptions {
-        jvmTarget = Deps.Versions.jvmTarget.toString()
-    }
-}
-
 // Retrieve the JavaToolchainService extension
 val javaToolchains: JavaToolchainService = extensions.getByType()
 
@@ -49,6 +37,18 @@ val javaToolchainTestLauncher: Provider<JavaLauncher> =
     javaToolchains.launcherFor {
         languageVersion.set(javaToolchainTestVersion)
     }
+
+tasks.withType<JavaCompile>().configureEach {
+    options.encoding = "UTF-8"
+    sourceCompatibility = javaToolchainMainVersion.get().toString()
+    targetCompatibility = javaToolchainMainVersion.get().toString()
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    kotlinOptions {
+        jvmTarget = javaToolchainMainVersion.get().toString()
+    }
+}
 
 
 plugins.withType<KotlinBasePlugin>().configureEach {
