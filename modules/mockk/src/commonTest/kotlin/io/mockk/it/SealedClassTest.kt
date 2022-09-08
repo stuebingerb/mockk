@@ -2,7 +2,6 @@ package io.mockk.it
 
 import io.mockk.every
 import io.mockk.mockk
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -10,7 +9,6 @@ import kotlin.test.assertEquals
 class SealedClassTest {
 
     @Test
-    @Ignore("Fails on JDK17+ https://github.com/mockk/mockk/issues/832")
     fun serviceReturnsSealedClassImpl() {
         val factory = mockk<Factory> {
             every { create() } returns Leaf(1)
@@ -22,7 +20,6 @@ class SealedClassTest {
     }
 
     @Test
-    @Ignore("Fails on JDK17+ https://github.com/mockk/mockk/issues/832")
     fun serviceAnswersSealedClassImpl() {
         val factory = mockk<Factory> {
             every { create() } answers { Leaf(1) }
@@ -48,5 +45,43 @@ class SealedClassTest {
             override fun create(): Node = Root(0)
         }
 
+        sealed class OtherNode
+
+        abstract class AbstractOtherNode : OtherNode()
+        class OtherRoot(val id: Int) : AbstractOtherNode()
+        class OtherLeaf(val id: Int) : AbstractOtherNode()
+
+        interface OtherFactory {
+            fun create(): OtherNode
+        }
+
+        class OtherFactoryImpl : OtherFactory {
+            override fun create(): OtherNode = OtherRoot(0)
+        }
+    }
+
+
+    @Test
+    fun serviceReturnsOtherSealedClassImpl() {
+        val otherLeaf = OtherLeaf(1)
+        val factory = mockk<OtherFactory> {
+            every { create() } returns otherLeaf
+        }
+
+        val result = factory.create()
+
+        assertEquals(otherLeaf, result)
+    }
+
+    @Test
+    fun serviceAnswersOtherSealedClassImpl() {
+        val otherLeaf = OtherLeaf(1)
+        val factory = mockk<OtherFactory> {
+            every { create() } answers { otherLeaf }
+        }
+
+        val result = factory.create()
+
+        assertEquals(otherLeaf, result)
     }
 }
