@@ -1,6 +1,8 @@
 package io.mockk.it
 
 import io.mockk.every
+import io.mockk.it.other.OtherFactory
+import io.mockk.it.other.OtherLeaf
 import io.mockk.mockk
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -61,5 +63,29 @@ class SealedClassTest {
             override fun format(node: Node): String = node.toString()
         }
 
+    }
+
+    @Test
+    fun serviceReturnsOtherSealedClassImpl() {
+        val otherLeaf = OtherLeaf(1)
+        val factory = mockk<OtherFactory> {
+            every { create() } returns otherLeaf
+        }
+
+        val result = factory.create()
+
+        assertEquals(otherLeaf, result)
+    }
+
+    @Test
+    fun serviceAnswersOtherSealedClassImpl() {
+        val otherLeaf = OtherLeaf(1)
+        val factory = mockk<OtherFactory> {
+            every { create() } answers { otherLeaf }
+        }
+
+        val result = factory.create()
+
+        assertEquals(otherLeaf, result)
     }
 }
